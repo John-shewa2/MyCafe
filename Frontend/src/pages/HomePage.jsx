@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 // IMPORTING THE LOGO
 // Make sure you have a file named 'logo.png' in your 'src/assets' folder
 // If your file is .jpg or .svg, change the extension below.
-import logo from '../assets/Logo.jpg'; 
+import logo from '../assets/Logo.png'; 
 
 const HomePage = () => {
   return (
