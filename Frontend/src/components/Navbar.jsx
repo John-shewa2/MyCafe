@@ -39,11 +39,11 @@ const Navbar = () => {
         // Filter logic:
         // 1. Must be same month
         // 2. Must be same year
-        // 3. Status must NOT be 'cancelled'
+        // 3. Status MUST be 'completed' (Matches Admin Logic)
         if (
           orderDate.getMonth() === currentMonth && 
           orderDate.getFullYear() === currentYear &&
-          order.status !== 'cancelled'
+          order.status === 'completed' 
         ) {
           return acc + order.totalCost;
         }
@@ -70,7 +70,7 @@ const Navbar = () => {
                 <img 
                   src={logo} 
                   alt="DBE Logo" 
-                  className="h-9 w-8 object-contain" 
+                  className="h-8 w-7 object-contain" 
                   onError={(e) => {e.target.style.display = 'none'}}
                 />
               </div>
@@ -85,27 +85,14 @@ const Navbar = () => {
             {/* RIGHT: NAVIGATION LINKS */}
             <div className="flex items-center space-x-4">
               
-              {/* ADMIN LINK */}
-              {user && user.role === 'admin' && (
-                <Link to="/admin" className="text-yellow-400 hover:text-white font-bold text-sm uppercase border border-yellow-400 hover:border-white px-3 py-1.5 rounded transition-all">
-                  Admin
-                </Link>
-              )}
-
-               <span className="text-green-200 text-sm hidden md:block border-l border-green-700 pl-4">
+              {/* 1. WELCOME USER */}
+              <span className="text-green-200 text-sm hidden md:block border-r border-green-700 pr-4 mr-2">
                 <span>Welcome, </span>
-                {user?.username}
+                <span className="font-bold text-white">{user?.username}</span>
               </span>
 
-              {/* WAITER LINK */}
-              {user && (user.role === 'waiter' || user.role === 'admin') && (
-                <Link to="/waiter" className="text-yellow-400 hover:text-white font-bold text-sm uppercase border border-yellow-400 hover:border-white px-3 py-1.5 rounded transition-all">
-                  Waiter Orders
-                </Link>
-              )}
-
-              {/* BILL HISTORY BUTTON */}
-              {user && user.role !== 'waiter' && (
+              {/* 2. BILL HISTORY BUTTON (Visible ONLY to regular users) */}
+              {user && user.role === 'user' && (
                 <button 
                   onClick={handleShowHistory}
                   className="bg-yellow-500 hover:bg-yellow-400 text-green-900 px-4 py-2 rounded-lg font-bold shadow-md text-sm flex items-center gap-2 transition-transform active:scale-95"
@@ -117,6 +104,7 @@ const Navbar = () => {
                 </button>
               )}
               
+              {/* 3. LOGOUT BUTTON */}
               <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-full font-bold hover:bg-red-700 transition-all shadow-lg text-sm flex items-center gap-1">
                 Logout
               </button>
@@ -133,7 +121,7 @@ const Navbar = () => {
                 <div className="p-5 border-b border-gray-200 flex justify-between items-center bg-green-50">
                     <h2 className="text-xl font-bold text-green-900 flex items-center gap-2">
                         <span className="bg-green-200 p-1.5 rounded text-green-800">📜</span> 
-                        Your Order History
+                        Monthly Bill Report
                     </h2>
                     <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-red-500 text-3xl leading-none">&times;</button>
                 </div>
@@ -149,15 +137,17 @@ const Navbar = () => {
                                     <p className="text-gray-500 text-xs uppercase font-bold tracking-wider mb-1">
                                       {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} Bill
                                     </p>
-                                    <p className="text-yellow-600 font-bold text-sm">Total Due (This Month)</p>
+                                    <p className="text-yellow-600 font-bold text-sm">Total Due (Completed Orders)</p>
                                 </div>
                                 <span className="text-3xl font-extrabold text-green-900">{currentMonthTotal.toFixed(2)} <span className="text-sm font-normal text-gray-400">ETB</span></span>
                             </div>
 
+                            <h3 className="font-bold text-gray-700 mb-3">Detailed Order History ({new Date().toLocaleString('default', { month: 'long' })})</h3>
+                            
                             {orderHistory.length === 0 ? (
                                 <div className="text-center py-12">
                                     <div className="text-4xl mb-2 opacity-20">🧾</div>
-                                    <p className="text-gray-400">No past orders found.</p>
+                                    <p className="text-gray-400">No orders found for this month.</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4">
@@ -175,7 +165,7 @@ const Navbar = () => {
                                                     </span>
                                                     <span className="text-xs text-gray-400">{new Date(order.createdAt).toLocaleDateString()}</span>
                                                 </div>
-                                                <span className={`font-bold ${order.status === 'cancelled' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                                                <span className={`font-bold ${order.status !== 'completed' ? 'text-gray-400' : 'text-gray-800'}`}>
                                                     {order.totalCost.toFixed(2)} ETB
                                                 </span>
                                             </div>
