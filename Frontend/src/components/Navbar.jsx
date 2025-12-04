@@ -70,7 +70,7 @@ const Navbar = () => {
                 <img 
                   src={logo} 
                   alt="DBE Logo" 
-                  className="h-12 w-12 object-contain" 
+                  className="h-9 w-8 object-contain" 
                   onError={(e) => {e.target.style.display = 'none'}}
                 />
               </div>
@@ -99,6 +99,11 @@ const Navbar = () => {
                 </Link>
               )}
 
+              <span className="text-green-200 text-sm hidden md:block border-l border-green-700 pl-4">
+                <span>Welcome, </span>
+                {user?.username}
+              </span>
+
               {/* BILL HISTORY BUTTON */}
               {user && user.role !== 'waiter' && (
                 <button 
@@ -111,10 +116,6 @@ const Navbar = () => {
                   My Bill
                 </button>
               )}
-
-              <span className="text-green-200 text-sm hidden md:block border-l border-green-700 pl-4">
-                {user?.username}
-              </span>
               
               <button onClick={handleLogout} className="bg-red-600 text-white px-4 py-2 rounded-full font-bold hover:bg-red-700 transition-all shadow-lg text-sm flex items-center gap-1">
                 Logout
