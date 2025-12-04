@@ -16,6 +16,14 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['admin', 'user'],
         default: 'user'
+    },
+    passwordChangeRequired: {
+        type: Boolean,
+        default: true
+    },
+    lastPasswordChange: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true
