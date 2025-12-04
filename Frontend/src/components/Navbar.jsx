@@ -92,17 +92,17 @@ const Navbar = () => {
                 </Link>
               )}
 
+               <span className="text-green-200 text-sm hidden md:block border-l border-green-700 pl-4">
+                <span>Welcome, </span>
+                {user?.username}
+              </span>
+
               {/* WAITER LINK */}
               {user && (user.role === 'waiter' || user.role === 'admin') && (
                 <Link to="/waiter" className="text-yellow-400 hover:text-white font-bold text-sm uppercase border border-yellow-400 hover:border-white px-3 py-1.5 rounded transition-all">
                   Waiter Orders
                 </Link>
               )}
-
-              <span className="text-green-200 text-sm hidden md:block border-l border-green-700 pl-4">
-                <span>Welcome, </span>
-                {user?.username}
-              </span>
 
               {/* BILL HISTORY BUTTON */}
               {user && user.role !== 'waiter' && (
