@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext'; // Import the Auth Context
+import { AuthContext } from '../context/AuthContext'; 
 import logo from '../assets/Logo.png'; 
 
 const LoginPage = () => {
@@ -8,29 +8,44 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   
-  // 1. Get the login function from our Global Context
   const { login, user } = useContext(AuthContext); 
   const navigate = useNavigate();
 
-  // 2. If already logged in, redirect to Menu immediately
+  // Helper function to handle redirects based on role
+  const redirectUser = (role) => {
+    if (role === 'admin') {
+      navigate('/admin');
+    } else if (role === 'waiter') {
+      navigate('/waiter');
+    } else {
+      navigate('/menu');
+    }
+  };
+
+  // 2. If already logged in, redirect based on role
   useEffect(() => {
     if (user) {
-      navigate('/menu');
+      redirectUser(user.role);
     }
   }, [user, navigate]);
 
   // 3. Handle Form Submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(''); // Clear old errors
+    setError(''); 
     
     // Call the backend via our Context function
+    // We assume 'login' returns the full user object including 'role' inside result.user or similar
+    // If your authContext only returns { success: true }, we might need to rely on the useEffect above
     const result = await login(username, password);
     
     if (result.success) {
-      navigate('/menu'); // Success! Go to menu.
+      // The context should update 'user', triggering the useEffect. 
+      // But to be instant, we can check the result if it contains the role.
+      // Assuming your AuthContext login returns { success: true } and sets state.
+      // The useEffect will handle the navigation.
     } else {
-      setError(result.message); // Fail! Show error.
+      setError(result.message); 
     }
   };
 

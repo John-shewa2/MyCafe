@@ -17,6 +17,12 @@ const users = [
     role: 'user',
     passwordChangeRequired: true, // This user will be forced to change password
   },
+  {
+    username: 'waiter',
+    password: hash('waiter123'),
+    role: 'waiter',
+    passwordChangeRequired: false,
+  }
 ];
 
 module.exports = users;

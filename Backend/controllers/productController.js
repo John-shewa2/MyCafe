@@ -30,7 +30,25 @@ const getProductById = async (req, res) => {
     }
 };
 
+// @desc Update product price
+// @route PUT /api/products/:id
+// @access Private (Admin)
+const updateProduct = async (req, res) => {
+    const { price } = req.body;
+    
+    const product = await Product.findById(req.params.id);
+
+    if (product) {
+        product.price = price;
+        const updatedProduct = await product.save();
+        res.json(updatedProduct);
+    } else {
+        res.status(404).json({ message: 'Product not found' });
+    }
+};
+
 module.exports = {
     getProducts,
-    getProductById
+    getProductById,
+    updateProduct
 };
