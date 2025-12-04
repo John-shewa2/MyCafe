@@ -15,7 +15,8 @@ const productSchema = mongoose.Schema({
     },
     category: {
         type: String,
-        enum: ['Tea', 'Coffee', '2L water', '1/2L water', 'Ginger Tea', 'milk', 'Machiato', 'spris'],
+        // Using broader categories that match the seed data in productData.js
+        enum: ['Hot Drinks', 'Water', 'Snacks'],
         required: true
     },
     image: {
