@@ -12,7 +12,7 @@ const addOrderItems = async (req, res) => {
             user: req.user._id,
             items,
             totalCost,
-            status: 'order' // <--- FIXED: Must match the enum in your Model
+            status: 'order'
         });
 
         const createdOrder = await order.save();
@@ -29,12 +29,11 @@ const getMyOrders = async (req, res) => {
 // @desc    Get all active orders (For Waiters)
 const getActiveOrders = async (req, res) => {
     try {
-        // Fetch orders that are NOT completed and NOT cancelled
         const orders = await Order.find({ 
             status: { $nin: ['completed', 'cancelled'] } 
         })
         .populate('user', 'username')
-        .sort({ createdAt: 1 }); // Oldest orders first
+        .sort({ createdAt: 1 });
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: 'Server Error' });
@@ -47,6 +46,8 @@ const updateOrderToDelivered = async (req, res) => {
         const order = await Order.findById(req.params.id);
         if (order) {
             order.status = 'completed';
+            // Save the waiter who performed this action
+            order.waiter = req.user._id; 
             const updatedOrder = await order.save();
             res.json(updatedOrder);
         } else {
@@ -63,6 +64,8 @@ const updateOrderToCancelled = async (req, res) => {
         const order = await Order.findById(req.params.id);
         if (order) {
             order.status = 'cancelled';
+            // Optionally track who cancelled it too
+            order.waiter = req.user._id; 
             const updatedOrder = await order.save();
             res.json(updatedOrder);
         } else {
@@ -73,20 +76,33 @@ const updateOrderToCancelled = async (req, res) => {
     }
 };
 
-// @desc    Calculate monthly bill (For Admin)
+// @desc    Calculate monthly bill (For Admin) with Filtering
 const calculateMonthlyBill = async (req, res) => {
     try {
         const date = new Date();
         const month = req.query.month ? parseInt(req.query.month) : date.getMonth() + 1;
         const year = req.query.year ? parseInt(req.query.year) : date.getFullYear();
         
+        // Extract filters from query params
+        const userId = req.query.userId;
+        const waiterId = req.query.waiterId;
+        
         const startDate = new Date(year, month - 1, 1);
         const endDate = new Date(year, month, 0, 23, 59, 59, 999);
 
-        const orders = await Order.find({
+        // Build the query object
+        let query = {
             status: 'completed', 
             createdAt: { $gte: startDate, $lte: endDate }
-        }).populate('user', 'username');
+        };
+
+        // Apply filters if they exist
+        if (userId) query.user = userId;
+        if (waiterId) query.waiter = waiterId;
+
+        const orders = await Order.find(query)
+            .populate('user', 'username')
+            .populate('waiter', 'username'); // Populate waiter name
 
         const monthlyTotal = orders.reduce((total, order) => total + order.totalCost, 0);
         
@@ -106,7 +122,9 @@ const calculateMonthlyBill = async (req, res) => {
 // @desc    Get order by ID
 const getOrderById = async (req, res) => {
     try {
-        const order = await Order.findById(req.params.id).populate('user', 'username');
+        const order = await Order.findById(req.params.id)
+            .populate('user', 'username')
+            .populate('waiter', 'username');
         if (order) {
             res.json(order);
         } else {

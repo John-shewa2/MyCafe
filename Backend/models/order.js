@@ -6,7 +6,11 @@ const orderSchema = new mongoose.Schema({
         ref: 'User',
         required: true
     },
-
+    // Add waiter field to track who delivered the order
+    waiter: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User'
+    },
     items: [
         {
             product: {

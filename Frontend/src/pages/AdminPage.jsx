@@ -11,12 +11,12 @@ const AdminPage = () => {
   const [userMsg, setUserMsg] = useState(null);
   const [usersLoading, setUsersLoading] = useState(false);
   
-  // --- NEW: Search & Pagination State ---
+  // Search & Pagination State
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const usersPerPage = 5;
 
-  // Orders State
+  // Orders Report State
   const [monthlyReport, setMonthlyReport] = useState(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [selectedDate, setSelectedDate] = useState(() => {
@@ -24,22 +24,34 @@ const AdminPage = () => {
     return { month: now.getMonth() + 1, year: now.getFullYear() };
   });
 
+  // Report Filters
+  const [filterUser, setFilterUser] = useState('');
+  const [filterWaiter, setFilterWaiter] = useState('');
+
   const { user } = useContext(AuthContext);
 
-  // --- EFFECTS ---
+  // Load users once on mount to populate dropdowns
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  // Fetch report whenever Date OR Filters change
   useEffect(() => {
     if (activeTab === 'orders') {
       fetchMonthlyReport();
-    } else if (activeTab === 'users') {
-      fetchUsers();
     }
-  }, [activeTab, selectedDate]);
+  }, [activeTab, selectedDate, filterUser, filterWaiter]);
 
   // --- API CALLS ---
   const fetchMonthlyReport = async () => {
     setLoadingReport(true);
     try {
-      const { data } = await api.get(`/orders/monthly-bill?month=${selectedDate.month}&year=${selectedDate.year}`);
+      // Build query string with filters
+      let query = `/orders/monthly-bill?month=${selectedDate.month}&year=${selectedDate.year}`;
+      if (filterUser) query += `&userId=${filterUser}`;
+      if (filterWaiter) query += `&waiterId=${filterWaiter}`;
+
+      const { data } = await api.get(query);
       setMonthlyReport(data);
     } catch (error) {
       console.error("Failed to load report", error);
@@ -92,20 +104,26 @@ const AdminPage = () => {
 
   const handleDownloadCSV = () => {
     if (!monthlyReport || monthlyReport.orders.length === 0) return;
-    const headers = ['Date', 'User ID', 'User Name', 'Items', 'Total Cost (ETB)'];
+    
+    const headers = ['Date', 'User Name', 'Waiter Name', 'Items', 'Total Cost (ETB)'];
+    
     const rows = monthlyReport.orders.map(order => [
       new Date(order.createdAt).toLocaleDateString(),
-      order.user?._id || 'N/A',
       order.user?.username || 'Unknown',
+      order.waiter?.username || 'N/A',
       order.items.map(i => `${i.quantity}x ${i.name}`).join('; '),
       order.totalCost.toFixed(2)
     ]);
+
+    // --- ADD GRAND TOTAL ROW TO CSV ---
+    rows.push(['', '', '', 'GRAND TOTAL', monthlyReport.totalBill.toFixed(2)]);
+
     const csvContent = [headers.join(','), ...rows.map(row => row.map(field => `"${field}"`).join(','))].join('\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     link.setAttribute('href', url);
-    link.setAttribute('download', `DBE_Monthly_Report_${monthlyReport.month}_${monthlyReport.year}.csv`);
+    link.setAttribute('download', `DBE_Report_${monthlyReport.month}_${monthlyReport.year}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -117,7 +135,7 @@ const AdminPage = () => {
     setSelectedDate(prev => ({ ...prev, [name]: parseInt(value) }));
   };
 
-  // --- FILTER & PAGINATION LOGIC ---
+  // --- FILTER & PAGINATION LOGIC (For User Management Tab) ---
   const filteredUsers = users.filter(u => 
     u.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
     u.role.toLowerCase().includes(searchTerm.toLowerCase())
@@ -127,6 +145,10 @@ const AdminPage = () => {
   const indexOfFirstUser = indexOfLastUser - usersPerPage;
   const currentUsers = filteredUsers.slice(indexOfFirstUser, indexOfLastUser);
   const totalPages = Math.ceil(filteredUsers.length / usersPerPage);
+
+  // Helpers for Dropdowns
+  const customers = users.filter(u => u.role === 'user');
+  const waiters = users.filter(u => u.role === 'waiter');
 
   if (user && user.role !== 'admin') {
     return <div className="p-10 text-center text-red-600 font-bold">Access Denied</div>;
@@ -147,24 +169,52 @@ const AdminPage = () => {
         {/* --- ORDERS TAB --- */}
         {activeTab === 'orders' && (
           <div>
-            <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-              <h2 className="text-xl font-bold text-gray-800">Monthly Financial Report</h2>
+            <div className="flex flex-col gap-6 mb-6">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800">Monthly Financial Report</h2>
+                <div className="flex gap-2">
+                    <button onClick={fetchMonthlyReport} className="text-sm text-green-600 hover:underline px-3">Refresh</button>
+                    {monthlyReport && monthlyReport.orders.length > 0 && (
+                        <button onClick={handleDownloadCSV} className="bg-green-800 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-900 flex items-center gap-2 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Export CSV
+                        </button>
+                    )}
+                </div>
+              </div>
               
-              <div className="flex flex-wrap items-center gap-3">
-                  <select name="month" value={selectedDate.month} onChange={handleDateChange} className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-green-500">
-                    {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>)}
-                  </select>
-                  <select name="year" value={selectedDate.year} onChange={handleDateChange} className="border border-gray-300 rounded px-2 py-1 text-sm focus:ring-green-500">
-                    {Array.from({ length: 5 }, (_, i) => <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>)}
-                  </select>
-                  <button onClick={fetchMonthlyReport} className="text-sm text-green-600 hover:underline">Refresh</button>
-                  
-                  {monthlyReport && monthlyReport.orders.length > 0 && (
-                      <button onClick={handleDownloadCSV} className="bg-green-800 text-white px-4 py-2 rounded text-sm font-bold hover:bg-green-900 flex items-center gap-2 shadow-sm">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                          Download CSV
-                      </button>
-                  )}
+              {/* FILTERS BAR */}
+              <div className="flex flex-wrap items-end gap-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  {/* Month/Year Selectors */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Period</label>
+                    <div className="flex gap-2">
+                      <select name="month" value={selectedDate.month} onChange={handleDateChange} className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-green-500 bg-white">
+                        {Array.from({ length: 12 }, (_, i) => <option key={i + 1} value={i + 1}>{new Date(0, i).toLocaleString('default', { month: 'long' })}</option>)}
+                      </select>
+                      <select name="year" value={selectedDate.year} onChange={handleDateChange} className="border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-green-500 bg-white">
+                        {Array.from({ length: 5 }, (_, i) => <option key={i} value={new Date().getFullYear() - i}>{new Date().getFullYear() - i}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Customer Filter */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Filter Customer</label>
+                    <select value={filterUser} onChange={(e) => setFilterUser(e.target.value)} className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-green-500 bg-white min-w-[150px]">
+                        <option value="">All Customers</option>
+                        {customers.map(c => <option key={c._id} value={c._id}>{c.username}</option>)}
+                    </select>
+                  </div>
+
+                  {/* Waiter Filter */}
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Filter Waiter</label>
+                    <select value={filterWaiter} onChange={(e) => setFilterWaiter(e.target.value)} className="border border-gray-300 rounded px-3 py-1.5 text-sm focus:ring-green-500 bg-white min-w-[150px]">
+                        <option value="">All Waiters</option>
+                        {waiters.map(w => <option key={w._id} value={w._id}>{w.username}</option>)}
+                    </select>
+                  </div>
               </div>
             </div>
 
@@ -173,30 +223,53 @@ const AdminPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="bg-green-50 p-4 rounded-lg border border-green-100"><p className="text-sm text-green-600 uppercase font-bold">Total Orders</p><p className="text-3xl font-bold text-green-900">{monthlyReport.orderCount}</p></div>
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-100"><p className="text-sm text-yellow-600 uppercase font-bold">Total Revenue</p><p className="text-3xl font-bold text-yellow-900">{monthlyReport.totalBill.toFixed(2)} ETB</p></div>
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100"><p className="text-sm text-blue-600 uppercase font-bold">Report Period</p><p className="text-3xl font-bold text-blue-900">{new Date(0, monthlyReport.month - 1).toLocaleString('default', { month: 'short' })} {monthlyReport.year}</p></div>
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100"><p className="text-sm text-blue-600 uppercase font-bold">Selected Period</p><p className="text-xl font-bold text-blue-900">{new Date(0, monthlyReport.month - 1).toLocaleString('default', { month: 'short' })} {monthlyReport.year}</p></div>
                 </div>
+                
                 <div className="overflow-x-auto border rounded-lg">
                   <table className="w-full text-left border-collapse">
-                    <thead><tr className="bg-gray-50 text-gray-600 text-sm uppercase"><th className="p-3 border-b">Date</th><th className="p-3 border-b">User</th><th className="p-3 border-b">Items</th><th className="p-3 border-b text-right">Total</th></tr></thead>
+                    <thead>
+                        <tr className="bg-gray-50 text-gray-600 text-sm uppercase">
+                            <th className="p-3 border-b">Date</th>
+                            <th className="p-3 border-b">Customer</th>
+                            <th className="p-3 border-b">Waiter</th>
+                            <th className="p-3 border-b">Items</th>
+                            <th className="p-3 border-b text-right">Total</th>
+                        </tr>
+                    </thead>
                     <tbody>
                       {monthlyReport.orders.map(order => (
                         <tr key={order._id} className="border-b border-gray-100 hover:bg-gray-50">
                           <td className="p-3 text-sm">{new Date(order.createdAt).toLocaleDateString()}</td>
-                          <td className="p-3 text-sm font-bold text-green-700">{order.user?.username || 'Unknown'}</td>
+                          <td className="p-3 text-sm font-bold text-gray-700">{order.user?.username || 'Unknown'}</td>
+                          <td className="p-3 text-sm text-gray-600">
+                            {order.waiter ? (
+                                <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs font-bold">{order.waiter.username}</span>
+                            ) : '-'}
+                          </td>
                           <td className="p-3 text-sm">{order.items.map(i => <span key={i._id} className="inline-block bg-gray-100 px-2 py-1 rounded text-xs mr-1 mb-1 border border-gray-200">{i.quantity}x {i.name}</span>)}</td>
                           <td className="p-3 text-sm font-bold text-right">{order.totalCost.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
+                    
+                    {/* --- ADDED: GRAND TOTAL FOOTER --- */}
+                    <tfoot className="bg-gray-100 font-bold text-gray-900 border-t-2 border-gray-300">
+                        <tr>
+                            <td colSpan="4" className="p-3 text-right uppercase text-sm">Grand Total</td>
+                            <td className="p-3 text-right text-lg">{monthlyReport.totalBill.toFixed(2)} ETB</td>
+                        </tr>
+                    </tfoot>
+
                   </table>
-                  {monthlyReport.orders.length === 0 && <p className="text-center text-gray-400 py-8">No completed orders found for this period.</p>}
+                  {monthlyReport.orders.length === 0 && <p className="text-center text-gray-400 py-8">No completed orders found for this selection.</p>}
                 </div>
               </div>
             ) : <p className="text-red-500 text-center py-10">Failed to load report data.</p>}
           </div>
         )}
 
-        {/* --- USERS TAB --- */}
+        {/* --- USERS TAB (Unchanged) --- */}
         {activeTab === 'users' && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Create User Form */}
