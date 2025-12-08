@@ -40,12 +40,36 @@ This project is built with modern technologies to deliver a fast and reliable ex
 
 ## 📂 Project Structure
 
-This repository is a monorepo containing two main directories:
+This repository is a monorepo containing two main projects: `Frontend` and `Backend`. Below is an overview of the key files and directories.
 
-- **/Frontend**: Contains the React.js client-side application.
-- **/Backend**: Contains the Node.js/Express REST API server.
-
-Each directory is a self-contained project with its own dependencies and scripts.
+```
+MyCafe/
+├── Backend/
+│   ├── controllers/    # Handles incoming requests and business logic
+│   ├── middleware/     # Express middleware (e.g., for authentication)
+│   ├── models/         # Mongoose schemas for the database
+│   ├── routes/         # API route definitions
+│   ├── .env            # Environment variables (local, not committed)
+│   ├── .env.example    # Example environment variables
+│   ├── package.json    # Backend dependencies and scripts
+│   └── server.js       # The entry point for the Node.js server
+│
+├── Frontend/
+│   ├── public/         # Static assets and the main index.html file
+│   ├── src/
+│   │   ├── api/        # Functions for making API calls to the backend
+│   │   ├── assets/     # Images, fonts, and other static assets
+│   │   ├── components/ # Reusable React components (e.g., Button, Card)
+│   │   ├── context/    # React Context for global state management
+│   │   ├── pages/      # Page-level components (e.g., Home, Login, Menu)
+│   │   ├── App.js      # Main application component with routing
+│   │   └── index.js    # The entry point for the React application
+│   ├── .env            # Environment variables (e.g., API URL)
+│   └── package.json    # Frontend dependencies and scripts
+│
+├── .gitignore          # Specifies files and folders to be ignored by Git
+└── README.md           # You are here!
+```
 
 ---
 
@@ -112,4 +136,3 @@ Make sure you have the following installed on your machine:
 The backend provides several API endpoints for managing users, menu items, and orders. For a detailed list of available routes, please refer to the Backend README.
 
 ---
-
