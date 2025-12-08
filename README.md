@@ -1,10 +1,10 @@
-# MyCafe - Backend
+# MyCafe - Full-Stack Cafe Management Application
 
-This repository contains the backend source code for the **MyCafe** application. It is a RESTful API built with Node.js and Express, designed to handle all the business logic for a modern cafe management system.
+Welcome to the MyCafe project! This is a full-stack web application designed as a modern, intuitive management system for a cafe. It features a complete backend API and a responsive user-facing frontend.
 
 ## 🚀 Live Demo
 
-You can see the full application in action, powered by this backend, at the following link:
+Check out the live version of the application deployed on Vercel:
 
 **[MyCafe Live Demo](https://my-cafe-ebon.vercel.app/)**
 
@@ -12,85 +12,104 @@ You can see the full application in action, powered by this backend, at the foll
 
 ## ✨ Features
 
-- **User Authentication**: Secure user registration and login using JSON Web Tokens (JWT).
-- **Menu Management**: Full CRUD (Create, Read, Update, Delete) functionality for menu items.
-- **Order Processing**: System for creating, viewing, and managing customer orders.
-- **Scalable Architecture**: Clean and organized codebase for easy maintenance and future expansion.
+- **Full-Stack Architecture**: A decoupled frontend and backend for scalability and maintainability.
+- **User Authentication**: Secure user registration and login with JSON Web Tokens (JWT).
+- **Dynamic Menu Management**: Full CRUD (Create, Read, Update, Delete) for menu items, manageable by admins.
+- **Seamless Order Processing**: Customers can browse the menu, add items to their cart, and place orders.
+- **Order History**: Users can view their past orders.
+
+---
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: [Node.js](https://nodejs.org/)
-- **Framework**: [Express.js](https://expressjs.com/)
-- **Database**: [MongoDB](https://www.mongodb.com/) with [Mongoose](https://mongoosejs.com/) for object data modeling.
-- **Authentication**: [JSON Web Tokens (JWT)](https://jwt.io/)
-- **Development**: [Nodemon](https://nodemon.io/) for automatic server restarts during development.
+This project is built with modern technologies to deliver a fast and reliable experience.
+
+### Frontend
+- **Framework**: React.js
+- **Styling**: (e.g., CSS Modules, Styled Components, or a framework like Tailwind CSS)
+- **State Management**: (e.g., React Context, Redux)
+- **API Communication**: Axios
+
+### Backend
+- **Runtime**: Node.js
+- **Framework**: Express.js
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JSON Web Tokens (JWT) & bcrypt
+
+---
+
+## 📂 Project Structure
+
+This repository is a monorepo containing two main directories:
+
+- **/Frontend**: Contains the React.js client-side application.
+- **/Backend**: Contains the Node.js/Express REST API server.
+
+Each directory is a self-contained project with its own dependencies and scripts.
 
 ---
 
 ## <caption> Getting Started
 
-Follow these instructions to get a local copy of the backend up and running for development and testing purposes.
+To get a local copy up and running, follow these steps.
 
 ### Prerequisites
 
 Make sure you have the following installed on your machine:
-
 - [Node.js](https://nodejs.org/en/download/) (v18.x or higher recommended)
 - [npm](https://www.npmjs.com/get-npm) (comes with Node.js)
-- [MongoDB](https://www.mongodb.com/try/download/community) (or a MongoDB Atlas account)
+- [MongoDB](https://www.mongodb.com/try/download/community) (or a MongoDB Atlas account for a cloud-hosted DB)
 
 ### Installation & Setup
 
 1.  **Clone the repository:**
     ```sh
-    git clone <your-repository-url>
+    git clone https://github.com/your-username/my-cafe.git
+    cd my-cafe
+    ```
+
+2.  **Set up the Backend:**
+
+    ```sh
+    # Navigate to the backend directory
     cd Backend
-    ```
 
-2.  **Install dependencies:**
-    ```sh
+    # Install dependencies
     npm install
-    ```
 
-3.  **Set up environment variables:**
+    # Create a .env file and add your environment variables
+    # (see Backend/README.md for more details)
+    cp .env.example .env
 
-    Create a `.env` file in the `Backend` root directory. Copy the contents of `.env.example` into it and fill in your specific configuration details (like your database connection string and JWT secret).
-
-    ```ini
-    # .env.example
-
-    # MongoDB Connection URI
-    MONGO_URI=mongodb://localhost:27017/mycafe
-
-    # Port for the server to run on
-    PORT=5000
-
-    # JWT Secret for signing tokens
-    JWT_SECRET=your_super_secret_key
-    ```
-
-4.  **Run the development server:**
-
-    This command uses `nodemon` to start the server, which will automatically restart when you make changes to the code.
-    ```sh
+    # Start the backend server (runs on http://localhost:5000 by default)
     npm run dev
     ```
 
-The API server should now be running on `http://localhost:5000` (or whatever port you specified in your `.env` file).
+3.  **Set up the Frontend:**
+
+    Open a new terminal window for this step.
+    ```sh
+    # Navigate to the frontend directory from the root
+    cd Frontend
+
+    # Install dependencies
+    npm install
+
+    # Create a .env file to point to your local backend API
+    echo "REACT_APP_API_URL=http://localhost:5000/api" > .env
+
+    # Start the frontend development server (runs on http://localhost:3000)
+    npm start
+    ```
+
+4.  **You're all set!**
+    Open your browser and navigate to `http://localhost:3000` to see the application running locally.
 
 ---
 
 ## 📝 API Endpoints
 
-Here are some of the primary API routes available:
+The backend provides several API endpoints for managing users, menu items, and orders. For a detailed list of available routes, please refer to the Backend README.
 
-- `POST /api/auth/register` - Register a new user.
-- `POST /api/auth/login` - Log in a user and receive a JWT.
-- `GET /api/menu` - Fetch all menu items.
-- `POST /api/menu` - Create a new menu item (admin only).
-- `POST /api/orders` - Create a new order.
-- `GET /api/orders/my-orders` - Get orders for the logged-in user.
+---
 
-## 📄 License
-
-This project is licensed under the MIT License.
